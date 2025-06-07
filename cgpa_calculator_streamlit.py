@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="CGPA Calculator", page_icon="📊")
-st.title("📊 CGPA Calculator (Custom Semesters + HTML Export)")
+st.title("📊 CGPA Calculator (Levels + Semesters + HTML Export)")
 
+# Input for one semester
 def input_courses(semester_id):
     st.subheader(f"📚 {semester_id}")
     num = st.number_input(f"Number of courses in {semester_id}", min_value=1, max_value=50, step=1, key=f"num_{semester_id}")
@@ -21,6 +22,7 @@ def input_courses(semester_id):
         credits.append(credit)
     return {"semester": semester_id, "courses": courses, "grades": grades, "credits": credits}
 
+# CGPA calculation for a semester
 def calculate_cgpa(grades, credits):
     total_credits = sum(credits)
     if total_credits == 0:
@@ -28,56 +30,75 @@ def calculate_cgpa(grades, credits):
     total_points = sum(g * c for g, c in zip(grades, credits))
     return total_points / total_credits, total_credits
 
-semester_count = st.number_input("How many semesters?", min_value=1, max_value=10, step=1)
-all_data = []
+# Input for all levels and semesters
+level_count = st.number_input("How many levels? (e.g., 100, 200, 300)", min_value=1, max_value=6, step=1)
+levels_data = {}
 
-for i in range(semester_count):
-    sem_name = st.text_input(f"Semester {i+1} Name", value=f"Semester {i+1}", key=f"sem_name_{i}")
-    semester_data = input_courses(sem_name)
-    all_data.append(semester_data)
+for i in range(level_count):
+    level_name = st.text_input(f"Enter name for Level {i+1}", value=f"{(i+1)*100} Level", key=f"level_{i}")
+    semester_count = st.number_input(f"How many semesters in {level_name}?", min_value=1, max_value=3, step=1, key=f"sem_count_{i}")
+    semesters = []
+    for j in range(semester_count):
+        sem_name = st.text_input(f"{level_name} - Semester {j+1} Name", value=f"Semester {j+1}", key=f"{level_name}_sem_{j}")
+        sem_data = input_courses(f"{level_name} - {sem_name}")
+        semesters.append(sem_data)
+    levels_data[level_name] = semesters
 
+# Button to calculate everything
 if st.button("🧮 Calculate CGPA"):
-    df_all = []
     total_weighted_points = 0
     total_units = 0
+    all_sem_dfs = []
 
-    for sem in all_data:
-        cgpa, sem_units = calculate_cgpa(sem["grades"], sem["credits"])
-        sem_df = pd.DataFrame({
-            "Semester": sem["semester"],
-            "Course": sem["courses"],
-            "Grade Point": sem["grades"],
-            "Unit": sem["credits"]
-        })
-        sem_df["Total Points"] = sem_df["Grade Point"] * sem_df["Unit"]
-        df_all.append(sem_df)
+    st.subheader("📊 Results by Level and Semester")
 
-        if cgpa is not None:
-            st.success(f"{sem['semester']} CGPA: **{cgpa:.2f}**")
-            total_weighted_points += cgpa * sem_units
-            total_units += sem_units
+    # Use one column per level for layout
+    level_cols = st.columns(len(levels_data))
 
-    final_df = pd.concat(df_all, ignore_index=True)
+    for col, (level_name, semesters) in zip(level_cols, levels_data.items()):
+        with col:
+            st.markdown(f"### 🎓 {level_name}")
+            for sem in semesters:
+                cgpa, units = calculate_cgpa(sem["grades"], sem["credits"])
+                if units > 0:
+                    df = pd.DataFrame({
+                        "Course": sem["courses"],
+                        "Grade Point": sem["grades"],
+                        "Unit": sem["credits"],
+                    })
+                    df["Total Points"] = df["Grade Point"] * df["Unit"]
+                    st.markdown(f"**{sem['semester']} CGPA: {cgpa:.2f}**")
+                    st.dataframe(df.style.format({
+                        "Grade Point": "{:.2f}",
+                        "Unit": "{:.1f}",
+                        "Total Points": "{:.2f}"
+                    }))
+                    total_weighted_points += cgpa * units
+                    total_units += units
+                    df["Semester"] = sem["semester"]
+                    df["Level"] = level_name
+                    all_sem_dfs.append(df)
 
+    # Overall CGPA
     if total_units == 0:
-        st.error("No valid credits found.")
+        st.error("❌ No valid credit units found.")
     else:
         overall_cgpa = total_weighted_points / total_units
         st.subheader("🏆 Overall CGPA:")
         st.success(f"**{overall_cgpa:.2f}**")
 
-    st.subheader("📋 Detailed Table")
-    st.dataframe(final_df.style.format({"Grade Point": "{:.2f}", "Unit": "{:.1f}", "Total Points": "{:.2f}"}))
+        # Combine all semester data
+        final_df = pd.concat(all_sem_dfs, ignore_index=True)
 
-    # 🔽 HTML export
-    html_export = final_df.to_html(index=False)
-    html_export += f"<br><h3>Overall CGPA: {overall_cgpa:.2f}</h3>"
+        # HTML Export
+        html_export = final_df.to_html(index=False)
+        html_export += f"<br><h3>Overall CGPA: {overall_cgpa:.2f}</h3>"
 
-    st.download_button(
-        label="📄 Download as HTML (Printable to PDF)",
-        data=html_export,
-        file_name="cgpa_report.html",
-        mime="text/html"
-    )
+        st.download_button(
+            label="📄 Download as HTML (Printable to PDF)",
+            data=html_export,
+            file_name="cgpa_report.html",
+            mime="text/html"
+        )
 
-    st.info("💡 Open the downloaded HTML file in a browser and press **Ctrl+P** (or Cmd+P on Mac) to save as **PDF**.")
+        st.info("💡 Open the downloaded HTML file in a browser and press **Ctrl+P** (or Cmd+P on Mac) to save as **PDF**.")
