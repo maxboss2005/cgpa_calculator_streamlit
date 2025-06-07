@@ -14,9 +14,9 @@ def input_courses(semester_id):
         with col1:
             course = st.text_input(f"{semester_id} - Course {i+1} Title", key=f"{semester_id}_course_{i}")
         with col2:
-            grade = st.number_input(f"{semester_id} - G.P", min_value=0, max_value=5.0, step=1, key=f"{semester_id}_grade_{i}")
+            grade = st.number_input(f"{semester_id} - G.P", min_value=0, max_value=5, step=1, key=f"{semester_id}_grade_{i}")
         with col3:
-            credit = st.number_input(f"{semester_id} - Unit", min_value=0, max_value=5.0, step=1, key=f"{semester_id}_credit_{i}")
+            credit = st.number_input(f"{semester_id} - Unit", min_value=0, max_value=5, step=1, key=f"{semester_id}_credit_{i}")
         courses.append(course)
         grades.append(grade)
         credits.append(credit)
