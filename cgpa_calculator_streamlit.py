@@ -14,7 +14,7 @@ credits = []
 
 # Dynamic subject input fields
 if num_subjects:
-    st.subheader("Enter Grade Points and Credit Hours")
+    st.subheader("Enter Grade Points (G.P) and Units")
     for i in range(1, num_subjects + 1):
         col1, col2 = st.columns(2)
         with col1:
