@@ -13,20 +13,20 @@ grades = []
 credits = []
 courses = []
 
-# Dynamic course input fields
+# Dynamic input fields: One row per course (title, GP, unit)
 if num_subjects:
-    st.subheader("Enter Course Code/Title, Grade Points (G.P), and Units")
+    st.subheader("Enter Course Details (Title, Grade Point, Unit)")
     for i in range(1, num_subjects + 1):
-        st.markdown(f"**Course {i}**")
-        course_code = st.text_input(f"Course {i} Code/Title", key=f"course_{i}")
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([3, 2, 2])
         with col1:
-            grade = st.number_input(f"{course_code or f'Course {i}'} Grade Point (GP)", min_value=0, max_value=5, step=1, key=f"grade_{i}")
+            course_code = st.text_input(f"Course {i} Title", key=f"course_{i}")
         with col2:
-            credit = st.number_input(f"{course_code or f'Course {i}'} Unit", min_value=0, max_value=5, step=1, key=f"credit_{i}")
+            grade = st.number_input("G.P", min_value=0, max_value=5, step=1, key=f"grade_{i}")
+        with col3:
+            credit = st.number_input("Unit", min_value=0, max_value=5, step=1, key=f"credit_{i}")
+        courses.append(course_code)
         grades.append(grade)
         credits.append(credit)
-        courses.append(course_code)
 
 # Button to calculate CGPA
 if st.button("Calculate CGPA"):
@@ -35,7 +35,7 @@ if st.button("Calculate CGPA"):
         total_credits = sum(credits)
 
         if total_credits == 0:
-            st.error("Total credit hours cannot be zero.")
+            st.error("Total credit units cannot be zero.")
         else:
             cgpa = total_points / total_credits
             st.success(f"✅ Your CGPA is: **{cgpa:.2f}**")
