@@ -6,23 +6,27 @@ st.set_page_config(page_title="CGPA Calculator", page_icon="📊")
 
 st.title("📊 CGPA Calculator")
 
-# Input: Number of subjects
+# Input: Number of courses
 num_subjects = st.number_input("Enter number of courses", min_value=1, max_value=100, step=1)
 
 grades = []
 credits = []
+courses = []
 
-# Dynamic subject input fields
+# Dynamic course input fields
 if num_subjects:
-    st.subheader("Enter Grade Points (G.P) and Units")
+    st.subheader("Enter Course Code/Title, Grade Points (G.P), and Units")
     for i in range(1, num_subjects + 1):
+        st.markdown(f"**Course {i}**")
+        course_code = st.text_input(f"Course {i} Code/Title", key=f"course_{i}")
         col1, col2 = st.columns(2)
         with col1:
-            grade = st.number_input(f"Course {i} Grade Point (GP)", min_value=0, max_value=5, step=1, key=f"grade_{i}")
+            grade = st.number_input(f"{course_code or f'Course {i}'} Grade Point (GP)", min_value=0, max_value=5, step=1, key=f"grade_{i}")
         with col2:
-            credit = st.number_input(f"Course {i} Unit", min_value=0, max_value=5, step=1, key=f"credit_{i}")
+            credit = st.number_input(f"{course_code or f'Course {i}'} Unit", min_value=0, max_value=5, step=1, key=f"credit_{i}")
         grades.append(grade)
         credits.append(credit)
+        courses.append(course_code)
 
 # Button to calculate CGPA
 if st.button("Calculate CGPA"):
@@ -35,5 +39,9 @@ if st.button("Calculate CGPA"):
         else:
             cgpa = total_points / total_credits
             st.success(f"✅ Your CGPA is: **{cgpa:.2f}**")
+
+            with st.expander("📋 Detailed Breakdown"):
+                for i in range(num_subjects):
+                    st.write(f"{courses[i] or f'Course {i+1}'}: GP = {grades[i]}, Unit = {credits[i]}")
     except:
         st.error("❌ Please enter valid numbers for all fields.")
