@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="CGPA Calculator", page_icon="📊")
-st.title("📊 CGPA Calculator")
+st.set_page_config(page_title="GradeTrack", page_icon="📊")
+st.title("📊 CGPA Collator")
 
 # Input for one semester
 def input_courses(semester_id):
