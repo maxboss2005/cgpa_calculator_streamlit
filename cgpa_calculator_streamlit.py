@@ -7,7 +7,7 @@ st.set_page_config(page_title="CGPA Calculator", page_icon="📊")
 st.title("📊 CGPA Calculator")
 
 # Input: Number of subjects
-num_subjects = st.number_input("Enter number of subjects", min_value=1, max_value=100, step=1)
+num_subjects = st.number_input("Enter number of courses", min_value=1, max_value=100, step=1)
 
 grades = []
 credits = []
