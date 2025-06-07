@@ -1,13 +1,9 @@
 import streamlit as st
 import pandas as pd
-from fpdf import FPDF
-import tempfile
-import os
 
 st.set_page_config(page_title="CGPA Calculator", page_icon="📊")
-st.title("📊 CGPA Calculator (Multiple Semesters + PDF Export)")
+st.title("📊 CGPA Calculator (Custom Semesters + HTML Export)")
 
-# Function to input course data for a semester
 def input_courses(semester_id):
     st.subheader(f"📚 {semester_id}")
     num = st.number_input(f"Number of courses in {semester_id}", min_value=1, max_value=50, step=1, key=f"num_{semester_id}")
@@ -25,7 +21,13 @@ def input_courses(semester_id):
         credits.append(credit)
     return {"semester": semester_id, "courses": courses, "grades": grades, "credits": credits}
 
-# Custom semester input
+def calculate_cgpa(grades, credits):
+    total_credits = sum(credits)
+    if total_credits == 0:
+        return None, 0
+    total_points = sum(g * c for g, c in zip(grades, credits))
+    return total_points / total_credits, total_credits
+
 semester_count = st.number_input("How many semesters?", min_value=1, max_value=10, step=1)
 all_data = []
 
@@ -34,15 +36,6 @@ for i in range(semester_count):
     semester_data = input_courses(sem_name)
     all_data.append(semester_data)
 
-# Function to calculate CGPA
-def calculate_cgpa(grades, credits):
-    total_credits = sum(credits)
-    if total_credits == 0:
-        return None, 0
-    total_points = sum(g * c for g, c in zip(grades, credits))
-    return total_points / total_credits, total_credits
-
-# Button to calculate CGPA
 if st.button("🧮 Calculate CGPA"):
     df_all = []
     total_weighted_points = 0
@@ -58,6 +51,7 @@ if st.button("🧮 Calculate CGPA"):
         })
         sem_df["Total Points"] = sem_df["Grade Point"] * sem_df["Unit"]
         df_all.append(sem_df)
+
         if cgpa is not None:
             st.success(f"{sem['semester']} CGPA: **{cgpa:.2f}**")
             total_weighted_points += cgpa * sem_units
@@ -75,33 +69,15 @@ if st.button("🧮 Calculate CGPA"):
     st.subheader("📋 Detailed Table")
     st.dataframe(final_df.style.format({"Grade Point": "{:.2f}", "Unit": "{:.1f}", "Total Points": "{:.2f}"}))
 
-    # Export to PDF
-    def generate_pdf(df, overall_cgpa):
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
-        pdf.cell(200, 10, "CGPA Report", ln=True, align="C")
+    # 🔽 HTML export
+    html_export = final_df.to_html(index=False)
+    html_export += f"<br><h3>Overall CGPA: {overall_cgpa:.2f}</h3>"
 
-        pdf.set_font("Arial", size=12)
-        for sem in df["Semester"].unique():
-            pdf.set_font("Arial", 'B', 12)
-            pdf.cell(200, 10, f"\n{sem}", ln=True)
-            pdf.set_font("Arial", size=11)
-            subset = df[df["Semester"] == sem]
-            for idx, row in subset.iterrows():
-                pdf.cell(200, 10, f"{row['Course'] or 'N/A'} - GP: {row['Grade Point']}, Unit: {row['Unit']}, Points: {row['Total Points']}", ln=True)
+    st.download_button(
+        label="📄 Download as HTML (Printable to PDF)",
+        data=html_export,
+        file_name="cgpa_report.html",
+        mime="text/html"
+    )
 
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(200, 10, f"\nOverall CGPA: {overall_cgpa:.2f}", ln=True)
-
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-        pdf.output(temp_file.name)
-        return temp_file.name
-
-    pdf_path = generate_pdf(final_df, overall_cgpa)
-
-    with open(pdf_path, "rb") as f:
-        st.download_button("📄 Download PDF Report", f, file_name="cgpa_report.pdf", mime="application/pdf")
-
-    # Clean up temp file after download
-    os.remove(pdf_path)
+    st.info("💡 Open the downloaded HTML file in a browser and press **Ctrl+P** (or Cmd+P on Mac) to save as **PDF**.")
