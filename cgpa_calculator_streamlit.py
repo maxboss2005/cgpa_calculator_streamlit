@@ -1,30 +1,10 @@
-import streamlit as st 
+import streamlit as st
 import pandas as pd
 
---- Page setup ---
+st.set_page_config(page_title="CGPA Calculator", page_icon="📊")
+st.title("📊 CGPA Calculator")
 
-st.set_page_config(page_title="UniTrack - CGPA Portal", page_icon="📊")
-
---- Authentication state ---
-
-if "authenticated" not in st.session_state: st.session_state.authenticated = False
-
---- In-memory user store ---
-
-if "users" not in st.session_state: st.session_state.users = {}  # {username: password}
-
---- Login Page ---
-
-def login_page(): st.subheader("🔐 Login") username = st.text_input("Username") password = st.text_input("Password", type="password") if st.button("Login"): if username in st.session_state.users and st.session_state.users[username] == password: st.session_state.authenticated = True st.success("Logged in successfully!") st.experimental_rerun() else: st.error("Invalid username or password")
-
---- Registration Page ---
-
-def register_page(): st.subheader("📝 Register") username = st.text_input("Create a Username") password = st.text_input("Create a Password", type="password") if st.button("Register"): if username in st.session_state.users: st.warning("Username already exists") else: st.session_state.users[username] = password st.success("Account created! Please login.")
-
---- CGPA Calculator Page ---
-
-def cgpa_calculator(): st.title("📊 CGPA Calculator")
-
+# Input for one semester
 def input_courses(semester_id):
     st.subheader(f"📚 {semester_id}")
     num = st.number_input(f"Number of courses in {semester_id}", min_value=1, max_value=50, step=1, key=f"num_{semester_id}")
@@ -42,6 +22,7 @@ def input_courses(semester_id):
         credits.append(credit)
     return {"semester": semester_id, "courses": courses, "grades": grades, "credits": credits}
 
+# CGPA calculation
 def calculate_cgpa(grades, credits):
     total_credits = sum(credits)
     if total_credits == 0:
@@ -49,6 +30,7 @@ def calculate_cgpa(grades, credits):
     total_points = sum(g * c for g, c in zip(grades, credits))
     return total_points / total_credits, total_credits
 
+# Input for all levels and semesters
 level_count = st.number_input("How many levels? (e.g., 100, 200, 300)", min_value=1, max_value=6, step=1)
 levels_data = {}
 
@@ -62,6 +44,7 @@ for i in range(level_count):
         semesters.append(sem_data)
     levels_data[level_name] = semesters
 
+# Calculation and display
 if st.button("🧮 Calculate CGPA"):
     total_weighted_points = 0
     total_units = 0
@@ -70,5 +53,47 @@ if st.button("🧮 Calculate CGPA"):
 
     for level_name, semesters in levels_data.items():
         st.markdown(f"## 🎓 {level_name}")
-        final_tables += f"<h2>{level_name}</
+        final_tables += f"<h2>{level_name}</h2>"
 
+        for sem in semesters:
+            cgpa, units = calculate_cgpa(sem["grades"], sem["credits"])
+            if units > 0:
+                df = pd.DataFrame({
+                    "Course Title": sem["courses"],
+                    "Grade Point": sem["grades"],
+                    "Unit": sem["credits"],
+                })
+                df["Total Points"] = df["Grade Point"] * df["Unit"]
+                st.markdown(f"**{sem['semester']} CGPA: {cgpa:.2f}**")
+                st.dataframe(df.style.format({"Grade Point": "{:.2f}", "Unit": "{:.1f}", "Total Points": "{:.2f}"}))
+
+                # For HTML export
+                final_tables += f"<h4>{sem['semester']} (CGPA: {cgpa:.2f})</h4>"
+                final_tables += df.to_html(index=False)
+                final_tables += "<br>"
+
+                total_weighted_points += cgpa * units
+                total_units += units
+
+                df["Level"] = level_name
+                df["Semester"] = sem["semester"]
+                all_sem_dfs.append(df)
+
+    # Overall CGPA
+    if total_units == 0:
+        st.error("❌ No valid credit units found.")
+    else:
+        overall_cgpa = total_weighted_points / total_units
+        st.subheader("🏆 Overall CGPA:")
+        st.success(f"**{overall_cgpa:.2f}**")
+        final_tables += f"<h3>Overall CGPA: {overall_cgpa:.2f}</h3>"
+
+        # HTML Export Button
+        st.download_button(
+            label="📄 Download as HTML (Printable to PDF)",
+            data=final_tables,
+            file_name="cgpa_report.html",
+            mime="text/html"
+        )
+
+        st.info("💡 Open the downloaded HTML file in a browser and press **Ctrl+P** (or Cmd+P) to export it as a PDF.")
