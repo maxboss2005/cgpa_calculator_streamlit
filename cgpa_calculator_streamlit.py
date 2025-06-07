@@ -13,17 +13,19 @@ grades = []
 credits = []
 courses = []
 
-# Dynamic input fields: One row per course (title, GP, unit)
+# Input fields per course, arranged in a single line
 if num_subjects:
-    st.subheader("Enter Course Details (Title, Grade Point, Unit)")
+    st.subheader("Enter Course Title, Grade Point (G.P), and Unit (Credit) on the same line")
+
     for i in range(1, num_subjects + 1):
-        col1, col2, col3 = st.columns([3, 2, 2])
-        with col1:
+        cols = st.columns([3, 2, 2])  # Wider column for title, smaller for GP and Unit
+        with cols[0]:
             course_code = st.text_input(f"Course {i} Title", key=f"course_{i}")
-        with col2:
+        with cols[1]:
             grade = st.number_input("G.P", min_value=0, max_value=5, step=1, key=f"grade_{i}")
-        with col3:
+        with cols[2]:
             credit = st.number_input("Unit", min_value=0, max_value=5, step=1, key=f"credit_{i}")
+
         courses.append(course_code)
         grades.append(grade)
         credits.append(credit)
