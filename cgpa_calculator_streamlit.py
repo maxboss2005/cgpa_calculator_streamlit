@@ -20,7 +20,7 @@ if num_subjects:
         with col1:
             grade = st.number_input(f"Course {i} Grade Point (GP)", min_value=0, max_value=5, step=1, key=f"grade_{i}")
         with col2:
-            credit = st.number_input(f"Course {i} Unit", min_value=0, max_value=5 step=1, key=f"credit_{i}")
+            credit = st.number_input(f"Course {i} Unit", min_value=0, max_value=5, step=1, key=f"credit_{i}")
         grades.append(grade)
         credits.append(credit)
 
