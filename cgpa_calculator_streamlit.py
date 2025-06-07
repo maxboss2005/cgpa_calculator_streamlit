@@ -18,9 +18,9 @@ if num_subjects:
     for i in range(1, num_subjects + 1):
         col1, col2 = st.columns(2)
         with col1:
-            grade = st.number_input(f"Subject {i} Grade Point", min_value=0.0, max_value=5.0, step=0.1, key=f"grade_{i}")
+            grade = st.number_input(f {i} Grade Point", min_value=0.0, max_value=5.0, step=0.1, key=f"grade_{i}")
         with col2:
-            credit = st.number_input(f"Subject {i} Credit Hours", min_value=0.0, step=0.5, key=f"credit_{i}")
+            credit = st.number_input(f"Course {i} Unit", min_value=0.0, step=0.5, key=f"credit_{i}")
         grades.append(grade)
         credits.append(credit)
 
